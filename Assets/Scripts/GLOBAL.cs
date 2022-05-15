@@ -23,7 +23,7 @@ public class GLOBAL : MonoBehaviour
     //编辑器调整
     public Image fade;
     [Min(0.001f)]
-    public float fadeSpeed = 1f;
+    public float fadeSpeed = 10f;
 
     //OnSave()中调用GLOBAL.SaveData(this, json)来保存数据   json可以从JsonUtility.ToJson(data)中得到，当然json也就是个字符串，你随便传个字符串也行
     public static void SaveData<T>(T component, string json) where T : Component
@@ -156,7 +156,7 @@ public class GLOBAL : MonoBehaviour
         Quit();
     }
 
-    //协程重载
+    //场景加载
     public static void LoadScene(string scenename, LoadSceneMode mode = LoadSceneMode.Single)
     {
         Instance.StartCoroutine(Instance.__LoadScene(scenename, mode));
@@ -172,11 +172,6 @@ public class GLOBAL : MonoBehaviour
         Instance.StartCoroutine(Instance.__UnloadAndLoadScene(unloadscene, loadscene, mode));
     }
 
-    public static void FadeTo(float alpha, bool keepactive = true)
-    {
-        Instance.StartCoroutine(Instance.__FadeTo(alpha,keepactive));
-    }
-
     //全局初始化
     private void Awake()
     {
@@ -189,11 +184,11 @@ public class GLOBAL : MonoBehaviour
         ThePlayer = GameObject.FindGameObjectWithTag("Player");
 
         //自定义场景加载
-        SceneManagerAPI.overrideAPI = new CustomSceneManagerAPI();
         for (int i = SceneManager.sceneCount - 1; i >= 0; --i)
         {
             Load(SceneManager.GetSceneAt(i));
         }
+        SceneManagerAPI.overrideAPI = new CustomSceneManagerAPI();
     }
 
     //通过组件获得存储时GameObject的名字
@@ -208,7 +203,7 @@ public class GLOBAL : MonoBehaviour
         return Application.dataPath + "/local/data/" + scene.name + ".data";
     }
 
-    private IEnumerator __FadeTo(float alpha, bool keepactive = true)
+    private IEnumerator FadeTo(float alpha, bool keepactive = true)
     {
         if (fade == null) { yield break; }
         fade.gameObject.SetActive(true);
@@ -222,17 +217,18 @@ public class GLOBAL : MonoBehaviour
             yield return null;
         }
 
-        if(!keepactive)
-            fade.gameObject.SetActive(false);
+        fade.gameObject.SetActive(keepactive);
     }
 
     private IEnumerator __LoadScene(string scenename, LoadSceneMode mode)
     {
         yield return SceneManager.LoadSceneAsync(scenename, mode);
+        if (autoFade) { yield return FadeTo(0, false); }
     }
 
     private IEnumerator __UnloadScene(string scenename)
     {
+        if (autoFade) { yield return FadeTo(1, true); }
         yield return SceneManager.UnloadSceneAsync(scenename);
     }
 
