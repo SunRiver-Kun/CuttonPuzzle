@@ -1,18 +1,22 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class InventorySlot : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    public Image icon;
+    public InventoryItem item;
 
-    // Update is called once per frame
-    void Update()
+    public void SetItem(InventoryItem item)
     {
-        
+        this.item = item;
+        if(icon!=null)
+        {
+            if(item==null) { icon.enabled = false; return; }
+            icon.sprite = item.icon;
+            icon.SetNativeSize();
+            icon.enabled = true;
+        }
     }
 }

@@ -11,6 +11,7 @@ public class GLOBAL : MonoBehaviour
 
     public static GameObject HUD;
     public static GameObject ThePlayer;
+    public static AllInventoryItems AllItems;
 
     public static bool autoFade = true;
     public static bool autoSaveAndLoad = true;
@@ -21,6 +22,9 @@ public class GLOBAL : MonoBehaviour
     private static bool isquiting = false;
 
     //编辑器调整
+    [Header("GLOBAL")]
+    public AllInventoryItems allItems;
+    [Header("Fade")]
     public Image fade;
     [Min(0.001f)]
     public float fadeSpeed = 10f;
@@ -182,6 +186,8 @@ public class GLOBAL : MonoBehaviour
         HUD = GameObject.FindGameObjectWithTag("HUD");
         Assert.IsNull(ThePlayer);
         ThePlayer = GameObject.FindGameObjectWithTag("Player");
+        Assert.IsNull(AllItems);
+        AllItems = allItems;
 
         //自定义场景加载
         for (int i = SceneManager.sceneCount - 1; i >= 0; --i)

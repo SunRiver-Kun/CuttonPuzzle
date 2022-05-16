@@ -2,17 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class InventoryItem : MonoBehaviour
-{
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+//本来InventoryItem应该写成组件形式的，不过算了，这个项目用不上
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+[System.Serializable]
+public class InventoryItem
+{
+    public string itemName;
+    public Sprite icon;
+    //public Inventory keeper;  GLOBAL.ThePlayer.GetComponent<Inventory>()
 }
