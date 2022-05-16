@@ -15,7 +15,8 @@ public class CustomSceneManagerAPI : SceneManagerAPI
 
     protected override AsyncOperation UnloadSceneAsyncByNameOrIndex(string sceneName, int sceneBuildIndex, bool immediately, UnloadSceneOptions options, out bool outSuccess)
     {
-        if (GLOBAL.autoSaveAndLoad) { GLOBAL.Save(sceneBuildIndex < 0 ? SceneManager.GetSceneByName(sceneName) : SceneManager.GetSceneByBuildIndex(sceneBuildIndex)); }
+        if (GLOBAL.autoSaveAndLoad) { GLOBAL.Save(sceneBuildIndex < 0 ? SceneManager.GetSceneByName(sceneName) : 
+            SceneManager.GetSceneByBuildIndex(sceneBuildIndex), true); }
         return base.UnloadSceneAsyncByNameOrIndex(sceneName, sceneBuildIndex, immediately, options, out outSuccess);
     }
 }

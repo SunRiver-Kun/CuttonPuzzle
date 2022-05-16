@@ -15,10 +15,14 @@ public class GLOBAL : MonoBehaviour
 
     public static bool autoFade = true;
     public static bool autoSaveAndLoad = true;
+    public static bool printDetailInfo = true;
 
     private static GLOBAL Instance;
-    //totaldata[objname][componentname] -> data:string   objname必须唯一
-    private static Dictionary<string, List<(string, string)>> totaldata = new Dictionary<string, List<(string, string)>>();
+
+    //为了实现在加载的数据没读完前，有手动调用OnSave的情况，需要两个容器
+    //alldata[objname][componentname] -> data:string   objname必须唯一
+    private static Dictionary<string, List<(string, string)>> savedata = new Dictionary<string, List<(string, string)>>();
+    private static Dictionary<string, List<(string, string)>> loaddata = new Dictionary<string, List<(string, string)>>();
     private static bool isquiting = false;
 
     //编辑器调整
@@ -29,16 +33,17 @@ public class GLOBAL : MonoBehaviour
     [Min(0.001f)]
     public float fadeSpeed = 10f;
 
+    //注：被禁用或删除的物体是广播不到的（被禁用的组件还是可以收到），解决方法是手动调用OnSave()
     //OnSave()中调用GLOBAL.SaveData(this, json)来保存数据   json可以从JsonUtility.ToJson(data)中得到，当然json也就是个字符串，你随便传个字符串也行
     public static void SaveData<T>(T component, string json) where T : Component
     {
         string objname = GetGameObjectName(component);
         List<(string, string)> data;
-        totaldata.TryGetValue(objname, out data);
+        savedata.TryGetValue(objname, out data);
         if (data == null)
         {
             data = new List<(string, string)>();
-            totaldata.Add(objname, data);
+            savedata.Add(objname, data);
         }
         data.Add((typeof(T).Name, json));
     }
@@ -48,7 +53,7 @@ public class GLOBAL : MonoBehaviour
     {
         string objname = GetGameObjectName(component);
         List<(string, string)> data;
-        if (!totaldata.TryGetValue(objname, out data) || data == null) { return ""; };
+        if (!loaddata.TryGetValue(objname, out data) || data == null) { return ""; };
         string compname = typeof(T).Name;
         string res = "";
         for (int i = data.Count - 1; i >= 0; --i)
@@ -61,30 +66,31 @@ public class GLOBAL : MonoBehaviour
                 break;
             }
         }
-        if (data.Count == 0) { totaldata.Remove(objname); }
+        if (data.Count == 0) { loaddata.Remove(objname); }
         return res;
     }
 
+    //注：文件保存格式和文件编码必须统一！
     //保存场景数据
-    public static void Save(Scene scene)
+    public static void Save(Scene scene, bool deletebuffer = false)
     {
         if (scene == null) { return; }
         Debug.Log("Saving scene: " + scene.name);
-        totaldata.Clear();
         GameObject[] objs = scene.GetRootGameObjects();
         foreach (GameObject inst in objs)
         {
             inst.BroadcastMessage("OnSave", SendMessageOptions.DontRequireReceiver);
         }
-        if (totaldata.Count == 0) { return; }
+        if (printDetailInfo) { PrintAllData(savedata); }
+        if (savedata.Count == 0) { return; }
 
         string path = GetSceneDataPath(scene);
         FileInfo info = new FileInfo(path);
         if (!info.Directory.Exists) { info.Directory.Create(); }
-        using (var stream = File.OpenWrite(path))
+        using (var stream = File.Open(path, FileMode.Create))   //OpenWriter并不会自动清空
         {
-            BinaryWriter writer = new BinaryWriter(stream);
-            foreach (var v in totaldata)
+            BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.UTF8);
+            foreach (var v in savedata)
             {
                 if (v.Value == null || v.Value.Count == 0) { continue; }
 
@@ -98,6 +104,7 @@ public class GLOBAL : MonoBehaviour
             }
             writer.Close();
         }
+        if (deletebuffer) { savedata.Clear(); }
         Debug.Log("Saving scene success: " + scene.name);
     }
 
@@ -109,27 +116,38 @@ public class GLOBAL : MonoBehaviour
         string path = GetSceneDataPath(scene);
         if (!File.Exists(path)) { return; }
 
-        totaldata.Clear();
+        loaddata.Clear();  //加载之前要清空缓存数据
         using (var stream = File.OpenRead(path))
         {
-            BinaryReader reader = new BinaryReader(stream);
-            while (reader.PeekChar() != -1)
+            BinaryReader reader = new BinaryReader(stream, System.Text.Encoding.UTF8);
+
+            bool eof = false;
+            while (!eof)   //还是用try catch好了，避免某人手动改数据，然后读取错误
             {
-                string objname = reader.ReadString();
-                int datalength = reader.ReadInt32();
-                List<(string, string)> data = new List<(string, string)>();
-                for (int i = 0; i < datalength; ++i)
+                try
                 {
-                    (string, string) v;
-                    v.Item1 = reader.ReadString();
-                    v.Item2 = reader.ReadString();
-                    data.Add(v);
+                    string objname = reader.ReadString();
+                    int datalength = reader.ReadInt32();
+                    List<(string, string)> data = new List<(string, string)>();
+                    for (int i = 0; i < datalength; ++i)
+                    {
+                        (string, string) v;
+                        v.Item1 = reader.ReadString();
+                        v.Item2 = reader.ReadString();
+                        data.Add(v);
+                    }
+                    loaddata.Add(objname, data);
                 }
-                totaldata.Add(objname, data);
+                finally
+                {
+                    eof = true;
+                    reader.Close();
+                }
             }
-            reader.Close();
         }
-        if (totaldata.Count == 0) { return; }
+
+        if (printDetailInfo) { PrintAllData(loaddata); }
+        if (loaddata.Count == 0) { return; }
 
         GameObject[] objs = scene.GetRootGameObjects();
         foreach (GameObject inst in objs)
@@ -148,15 +166,18 @@ public class GLOBAL : MonoBehaviour
 #endif
     }
 
+    public static void SaveAll()
+    {
+        for (int i = SceneManager.sceneCount - 1; i >= 0; --i)
+        {
+            Save(SceneManager.GetSceneAt(i), true);
+        }
+    }
     public static void SaveAndQuit()
     {
         if (isquiting) { return; }
         isquiting = true;
-
-        for (int i = SceneManager.sceneCount - 1; i >= 0; --i)
-        {
-            Save(SceneManager.GetSceneAt(i));
-        }
+        SaveAll();
         Quit();
     }
 
@@ -195,6 +216,31 @@ public class GLOBAL : MonoBehaviour
             Load(SceneManager.GetSceneAt(i));
         }
         SceneManagerAPI.overrideAPI = new CustomSceneManagerAPI();
+    }
+
+
+    //编辑器并不会调用场景的卸载函数，而是直接Quit
+#if UNITY_EDITOR
+    private void OnApplicationQuit()
+    {
+        if (autoSaveAndLoad && !isquiting)  //并不是按右上角保存并退出
+            SaveAll();
+    }
+#endif
+
+    private static void PrintAllData(Dictionary<string, List<(string, string)>> totaldata)
+    {
+        foreach (var v in totaldata)
+        {
+            Debug.Log("Start: " + v.Key);
+            string outstr = "";
+            foreach (var data in v.Value)
+            {
+                outstr += data.Item1 + " = " + data.Item2 + ",\n";
+            }
+            Debug.Log(outstr);
+            Debug.Log("End: " + v.Key);
+        }
     }
 
     //通过组件获得存储时GameObject的名字

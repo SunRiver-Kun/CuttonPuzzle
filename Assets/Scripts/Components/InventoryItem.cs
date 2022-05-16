@@ -9,5 +9,6 @@ public class InventoryItem
 {
     public string itemName;
     public Sprite icon;
+    public string tooltip;
     //public Inventory keeper;  GLOBAL.ThePlayer.GetComponent<Inventory>()
 }

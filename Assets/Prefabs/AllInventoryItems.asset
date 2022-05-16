@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: AllInventoryItems
   m_EditorClassIdentifier: 
   items:
-  - itemName: key
+  - itemName: Key
     icon: {fileID: 21300000, guid: 7a4846191b29a96499d82a60d4840278, type: 3}
-  - itemName: mail
+  - itemName: Mail
     icon: {fileID: 21300000, guid: 93e4031bc8abc01459df5f3a7edb4ea3, type: 3}
