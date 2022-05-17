@@ -6,6 +6,8 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Assertions;
 using UnityEngine.UI;
 
+//Awake -> OnEnable -> OnLoad -> Start -> Update -> OnSave -> OnDisable -> OnDestroy -> OnAppicationQuit
+
 public class GLOBAL : MonoBehaviour
 {
 
@@ -15,7 +17,9 @@ public class GLOBAL : MonoBehaviour
 
     public static bool autoFade = true;
     public static bool autoSaveAndLoad = true;
-    public static bool printDetailInfo = true;
+    public static bool isQuiting { get; private set; }
+    public static bool printDetailInfo = false;
+
 
     private static GLOBAL Instance;
 
@@ -23,7 +27,7 @@ public class GLOBAL : MonoBehaviour
     //alldata[objname][componentname] -> data:string   objname必须唯一
     private static Dictionary<string, List<(string, string)>> savedata = new Dictionary<string, List<(string, string)>>();
     private static Dictionary<string, List<(string, string)>> loaddata = new Dictionary<string, List<(string, string)>>();
-    private static bool isquiting = false;
+
 
     //编辑器调整
     [Header("GLOBAL")]
@@ -70,16 +74,22 @@ public class GLOBAL : MonoBehaviour
         return res;
     }
 
-    //注：文件保存格式和文件编码必须统一！
+    //注：文件保存格式和文件编码必须统一！ 
+    //如果用广播被禁用的物体就接收不到，所以换了种写法
     //保存场景数据
-    public static void Save(Scene scene, bool deletebuffer = false)
+    public static void Save(Scene scene)
     {
         if (scene == null) { return; }
-        Debug.Log("Saving scene: " + scene.name);
+        if (printDetailInfo) { Debug.Log("Saving scene: " + scene.name); }
+        savedata.Clear();
         GameObject[] objs = scene.GetRootGameObjects();
         foreach (GameObject inst in objs)
         {
-            inst.BroadcastMessage("OnSave", SendMessageOptions.DontRequireReceiver);
+            foreach (var v in inst.GetComponentsInChildren<ISaveAndLoad>(true))
+            {
+                v.OnSave();
+            }
+            //inst.BroadcastMessage("OnSave", SendMessageOptions.DontRequireReceiver);
         }
         if (printDetailInfo) { PrintAllData(savedata); }
         if (savedata.Count == 0) { return; }
@@ -104,7 +114,6 @@ public class GLOBAL : MonoBehaviour
             }
             writer.Close();
         }
-        if (deletebuffer) { savedata.Clear(); }
         Debug.Log("Saving scene success: " + scene.name);
     }
 
@@ -112,7 +121,7 @@ public class GLOBAL : MonoBehaviour
     public static void Load(Scene scene)
     {
         if (scene == null) { return; }
-        Debug.Log("Loading scene: " + scene.name);
+        if (printDetailInfo) { Debug.Log("Loading scene: " + scene.name); }
         string path = GetSceneDataPath(scene);
         if (!File.Exists(path)) { return; }
 
@@ -120,7 +129,6 @@ public class GLOBAL : MonoBehaviour
         using (var stream = File.OpenRead(path))
         {
             BinaryReader reader = new BinaryReader(stream, System.Text.Encoding.UTF8);
-
             bool eof = false;
             while (!eof)   //还是用try catch好了，避免某人手动改数据，然后读取错误
             {
@@ -138,7 +146,7 @@ public class GLOBAL : MonoBehaviour
                     }
                     loaddata.Add(objname, data);
                 }
-                finally
+                catch(System.Exception)
                 {
                     eof = true;
                     reader.Close();
@@ -152,7 +160,11 @@ public class GLOBAL : MonoBehaviour
         GameObject[] objs = scene.GetRootGameObjects();
         foreach (GameObject inst in objs)
         {
-            inst.BroadcastMessage("OnLoad", SendMessageOptions.DontRequireReceiver);
+            foreach (var v in inst.GetComponentsInChildren<ISaveAndLoad>(true))
+            {
+                v.OnLoad();
+            }
+            //inst.BroadcastMessage("OnLoad", SendMessageOptions.DontRequireReceiver);
         }
         Debug.Log("Loading scene success: " + scene.name);
     }
@@ -170,18 +182,18 @@ public class GLOBAL : MonoBehaviour
     {
         for (int i = SceneManager.sceneCount - 1; i >= 0; --i)
         {
-            Save(SceneManager.GetSceneAt(i), true);
+            Save(SceneManager.GetSceneAt(i));
         }
     }
     public static void SaveAndQuit()
     {
-        if (isquiting) { return; }
-        isquiting = true;
+        if (isQuiting) { return; }
+        isQuiting = true;
         SaveAll();
         Quit();
     }
 
-    //场景加载
+    //场景加载和卸载，只是添加了Fade。保存在CustomSceneManagerAPI.cs
     public static void LoadScene(string scenename, LoadSceneMode mode = LoadSceneMode.Single)
     {
         Instance.StartCoroutine(Instance.__LoadScene(scenename, mode));
@@ -209,36 +221,17 @@ public class GLOBAL : MonoBehaviour
         ThePlayer = GameObject.FindGameObjectWithTag("Player");
         Assert.IsNull(AllItems);
         AllItems = allItems;
-
-        //自定义场景加载
-        for (int i = SceneManager.sceneCount - 1; i >= 0; --i)
-        {
-            Load(SceneManager.GetSceneAt(i));
-        }
-        SceneManagerAPI.overrideAPI = new CustomSceneManagerAPI();
     }
-
-
-    //编辑器并不会调用场景的卸载函数，而是直接Quit
-#if UNITY_EDITOR
-    private void OnApplicationQuit()
-    {
-        if (autoSaveAndLoad && !isquiting)  //并不是按右上角保存并退出
-            SaveAll();
-    }
-#endif
 
     private static void PrintAllData(Dictionary<string, List<(string, string)>> totaldata)
     {
         foreach (var v in totaldata)
         {
-            Debug.Log("Start: " + v.Key);
-            string outstr = "";
+            Debug.Log("Start: " + v.Key + " Total: " + v.Value.Count);
             foreach (var data in v.Value)
             {
-                outstr += data.Item1 + " = " + data.Item2 + ",\n";
+                Debug.Log(data.Item1 + " = " + data.Item2);
             }
-            Debug.Log(outstr);
             Debug.Log("End: " + v.Key);
         }
     }
