@@ -12,10 +12,8 @@ public class Command : MonoBehaviour
         inventory.AddItem(itemname);
     }
 
-    public static void c_remove(string itemname)
+    public static void c_remove()
     {
-        Inventory inventory = GLOBAL.ThePlayer?.GetComponent<Inventory>();
-        if (inventory == null) { return; }
-        inventory.RemoveItem(itemname);
+        GLOBAL.ThePlayer?.GetComponent<Inventory>()?.RemoveCurrentItem();
     }
 }

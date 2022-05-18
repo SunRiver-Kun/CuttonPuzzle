@@ -2,17 +2,28 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Mail : MonoBehaviour
+public class Mail : MonoBehaviour, ISaveAndLoad
 {
-    // Start is called before the first frame update
-    void Start()
+    bool isdestoryed = false;
+
+    public void OnSave()
     {
-        
+        GLOBAL.SaveData(this, isdestoryed.ToString());
     }
 
-    // Update is called once per frame
-    void Update()
+    public void OnLoad()
     {
-        
+        string data = GLOBAL.LoadData(this);
+        if (data == "") { return; }
+        isdestoryed = bool.Parse(data);
+
+        if (isdestoryed) { gameObject.SetActive(false); }
+    }
+
+    private void OnMouseDown()
+    {
+        Command.c_give("Mail");
+        isdestoryed = true;
+        gameObject.SetActive(false);
     }
 }
