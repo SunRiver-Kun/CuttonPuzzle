@@ -37,14 +37,16 @@ public class Inventory : MonoBehaviour, ISaveAndLoad
 
     public void RemoveCurrentItem()
     {
-        if (items.Count <= 1)
+        if (items.Count == 0) { return; }
+        
+        items.RemoveAt(currentItemIndex);
+        if (items.Count == 0)
         {
             currentItemIndex = 0;
             slot?.SetItem(null);
         }
         else
         {
-            items.RemoveAt(currentItemIndex);
             currentItemIndex = currentItemIndex % items.Count;
             slot?.SetItem(items[currentItemIndex]);
         }
@@ -80,7 +82,7 @@ public class Inventory : MonoBehaviour, ISaveAndLoad
         }
         else
         {
-            currentItemIndex = items.Count - 1 - (items.Count - currentItemIndex ) % items.Count;
+            currentItemIndex = items.Count - 1 - (items.Count - currentItemIndex) % items.Count;
             slot?.SetItem(items[currentItemIndex]);
         }
     }
@@ -111,7 +113,7 @@ public class Inventory : MonoBehaviour, ISaveAndLoad
         {
             AddItem(v);
         }
-        if(items.Count==0)
+        if (items.Count == 0)
         {
             currentItemIndex = 0;
             slot?.SetItem(null);

@@ -1,15 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class InventorySlot : MonoBehaviour
 {
     public Sprite handImage;
-    [HideInInspector]
+    public GameObject toolTip;
     public Image icon;
-    [HideInInspector]
-    public InventoryItem item;
+
+    [System.NonSerialized]
+    public InventoryItem item;  //编辑器一序列化就不为空了
+
+    public static bool IsValidItem(InventoryItem item) => item!=null && !string.IsNullOrEmpty(item.itemName);
 
     GameObject handitem;
 
@@ -18,7 +22,7 @@ public class InventorySlot : MonoBehaviour
         this.item = item;
         if (icon != null)
         {
-            if (item == null) { icon.enabled = false; return; }
+            if (!IsValidItem(item)) { icon.enabled = false; return; }
             icon.sprite = item.icon;
             icon.SetNativeSize();
             icon.enabled = true;
@@ -27,7 +31,7 @@ public class InventorySlot : MonoBehaviour
 
     public void OnStartDragItem()
     {
-        if(item==null) { return; }
+        if(!IsValidItem(item)) { return; }
 
         Image image;
         if (handitem == null)
@@ -55,15 +59,30 @@ public class InventorySlot : MonoBehaviour
         var mousepos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         var hit = Physics2D.OverlapPoint(new Vector2(mousepos.x,mousepos.y));
         IItemCallBack cb = hit ? hit.gameObject.GetComponent<IItemCallBack>() : null;
-        if(cb==null) { return; }
+        if(cb==null || !IsValidItem(item)) { return; }
         if( cb.OnItemAction(item) )
         {
             GLOBAL.ThePlayer.GetComponent<Inventory>()?.RemoveCurrentItem();
         }
     }
 
+    public void OnPointEnter()
+    {   
+        if(toolTip==null || !IsValidItem(item)) { return; }
+        toolTip.SetActive(true);
+        toolTip.GetComponentInChildren<Text>().text = item.tooltip;
+    }
+
+    public void OnPointExit()
+    {
+        if(toolTip==null) { return; }
+        toolTip.SetActive(false);
+    }
+
     private void Update()
     {
+        //Debug.Log(Input.mousePosition);
+        
         if (handitem == null || !handitem.activeSelf) { return; }
         handitem.transform.position = Input.mousePosition;
 

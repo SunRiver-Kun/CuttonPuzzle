@@ -11,7 +11,8 @@ GameObject:
   - component: {fileID: 2824735272628898313}
   - component: {fileID: 2824735272628898314}
   - component: {fileID: 2824735272628898312}
-  - component: {fileID: 5301919638175241449}
+  - component: {fileID: -5775662986374966652}
+  - component: {fileID: 1650693180161053106}
   m_Layer: 0
   m_Name: key
   m_TagString: Untagged
@@ -110,7 +111,7 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.8226825, y: 1.1126828}
   m_EdgeRadius: 0
---- !u!114 &5301919638175241449
+--- !u!114 &-5775662986374966652
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -119,6 +120,61 @@ MonoBehaviour:
   m_GameObject: {fileID: 2824735272628898315}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 193eda19611794547a8d6cc8e6d5b39c, type: 3}
+  m_Script: {fileID: 11500000, guid: 6591b6fb01157134b9b9c7c9bc584b3e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1650693180161053106
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2824735272628898315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 824b3e863a3f17c4fa384979742a4acc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  onceClick: 1
+  onClicked:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: -5775662986374966652}
+        m_TargetAssemblyTypeName: Command, Assembly-CSharp
+        m_MethodName: c_give
+        m_Mode: 5
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: Key
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 2824735272628898315}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onSecondLoad:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2824735272628898315}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
