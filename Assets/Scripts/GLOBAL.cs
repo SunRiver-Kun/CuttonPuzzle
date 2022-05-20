@@ -30,6 +30,8 @@ public class GLOBAL : MonoBehaviour
 
 
     //编辑器调整
+    [Header("Scene")]
+    public string startScene = "H1";
     [Header("GLOBAL")]
     public AllInventoryItems allItems;
     [Header("Fade")]
@@ -221,6 +223,11 @@ public class GLOBAL : MonoBehaviour
         ThePlayer = GameObject.FindGameObjectWithTag("Player");
         Assert.IsNull(AllItems);
         AllItems = allItems;
+
+        if(!Application.isEditor)
+        {
+            LoadScene(startScene, LoadSceneMode.Additive);
+        }
     }
 
     private static void PrintAllData(Dictionary<string, List<(string, string)>> totaldata)
