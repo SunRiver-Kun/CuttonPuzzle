@@ -417,6 +417,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   printDetailInfo: 0
+  win: 1
+  data: "\u554A"
+  obj: {fileID: 0}
 --- !u!4 &1913049192
 Transform:
   m_ObjectHideFlags: 0

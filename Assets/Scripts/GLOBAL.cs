@@ -146,7 +146,7 @@ public class GLOBAL : MonoBehaviour
                     }
                     loaddata.Add(objname, data);
                 }
-                catch(System.Exception)
+                catch (System.Exception)
                 {
                     eof = true;
                     reader.Close();
@@ -268,6 +268,7 @@ public class GLOBAL : MonoBehaviour
     private IEnumerator __LoadScene(string scenename, LoadSceneMode mode)
     {
         yield return SceneManager.LoadSceneAsync(scenename, mode);
+        SceneManager.SetActiveScene(SceneManager.GetSceneAt(SceneManager.sceneCount - 1));
         if (autoFade) { yield return FadeTo(0, false); }
     }
 
@@ -275,11 +276,12 @@ public class GLOBAL : MonoBehaviour
     {
         if (autoFade) { yield return FadeTo(1, true); }
         yield return SceneManager.UnloadSceneAsync(scenename);
+        if (SceneManager.sceneCount > 0) { SceneManager.SetActiveScene(SceneManager.GetSceneAt(SceneManager.sceneCount - 1)); }
     }
 
     private IEnumerator __UnloadAndLoadScene(string unloadscenename, string loadscenename, LoadSceneMode mode = LoadSceneMode.Additive)
     {
-        yield return __UnloadScene(unloadscenename);
-        yield return __LoadScene(loadscenename, mode);
+        if (!string.IsNullOrEmpty(unloadscenename)) { yield return __UnloadScene(unloadscenename); }
+        if (!string.IsNullOrEmpty(loadscenename)) { yield return __LoadScene(loadscenename, mode); }
     }
 }

@@ -11,8 +11,13 @@ public class SceneSwitcher : MonoBehaviour
     private bool isdown = false;
     private void OnMouseDown() 
     {
-        if(isdown || string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to)) { return; }
+        if(isdown) { return; }
         isdown = true;
+        Switch();
+    }
+
+    public void Switch()
+    {
         GLOBAL.UnloadAndLoadScene(from, to, LoadSceneMode.Additive);
     }
 }
