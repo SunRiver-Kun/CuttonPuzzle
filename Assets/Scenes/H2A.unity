@@ -465,6 +465,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   linePrefab: {fileID: 713903471142943949, guid: 5c760ba7c7ceba6418345b602d8c6aac, type: 3}
   lengthScale: 1
+  bgm: {fileID: 8300000, guid: cb7b5077e43cfb14badaf30c91b64ba4, type: 3}
 --- !u!4 &1300197701
 Transform:
   m_ObjectHideFlags: 0

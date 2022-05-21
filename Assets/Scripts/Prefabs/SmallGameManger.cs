@@ -12,6 +12,8 @@ public class SmallGameManger : MonoBehaviour
     public GameObject linePrefab;
     public float lengthScale = 1f;
 
+    public AudioClip bgm;
+
     public static void ResetSlots()
     {
         win = false;
@@ -58,6 +60,8 @@ public class SmallGameManger : MonoBehaviour
     {
         slots = FindObjectsOfType<SmallGameSlot>();
         SpawnLines();
+
+        GLOBAL.PlayBGM(bgm);
     }
 
     private void Update() 
@@ -69,5 +73,10 @@ public class SmallGameManger : MonoBehaviour
         {
             FindObjectOfType<SceneSwitcher>()?.Switch();
         }
+    }
+
+    private void OnDisable() 
+    {
+        GLOBAL.PlayDefaultBGM();
     }
 }

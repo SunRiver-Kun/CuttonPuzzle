@@ -14,12 +14,15 @@ public class GLOBAL : MonoBehaviour
     public static GameObject HUD;
     public static GameObject ThePlayer;
     public static AllInventoryItems AllItems;
+    public static AudioSource BGMPlayer;
 
     public static bool autoFade = true;
     public static bool autoSaveAndLoad = true;
     public static bool isQuiting { get; private set; }
     public static bool printDetailInfo = false;
 
+    //不能在构造的时候调用Application.dataPath
+    public static string dataPath => Application.dataPath + "/local/data";
 
     private static GLOBAL Instance;
 
@@ -30,10 +33,10 @@ public class GLOBAL : MonoBehaviour
 
 
     //编辑器调整
-    [Header("Scene")]
-    public string startScene = "H1";
     [Header("GLOBAL")]
     public AllInventoryItems allItems;
+    [Header("Audio")]
+    public AudioClip defaultClip;
     [Header("Fade")]
     public Image fade;
     [Min(0.001f)]
@@ -195,7 +198,7 @@ public class GLOBAL : MonoBehaviour
         Quit();
     }
 
-    //场景加载和卸载，只是添加了Fade。保存在CustomSceneManagerAPI.cs
+    //场景加载和卸载，只是添加了Fade。保存在CustomSceneManagerAPI.cs，在Persistent加载之前，直接用SceneManager即可
     public static void LoadScene(string scenename, LoadSceneMode mode = LoadSceneMode.Single)
     {
         Instance.StartCoroutine(Instance.__LoadScene(scenename, mode));
@@ -211,6 +214,20 @@ public class GLOBAL : MonoBehaviour
         Instance.StartCoroutine(Instance.__UnloadAndLoadScene(unloadscene, loadscene, mode));
     }
 
+    public static void PlayBGM(AudioClip clip)
+    {
+        if (BGMPlayer == null) { return; }
+        BGMPlayer.clip = clip;
+        BGMPlayer.Play();
+    }
+
+    public static void PlayDefaultBGM()
+    {
+        if (BGMPlayer == null) { return; }
+        BGMPlayer.clip = Instance?.defaultClip;
+        BGMPlayer.Play();
+    }
+
     //全局初始化
     private void Awake()
     {
@@ -223,11 +240,8 @@ public class GLOBAL : MonoBehaviour
         ThePlayer = GameObject.FindGameObjectWithTag("Player");
         Assert.IsNull(AllItems);
         AllItems = allItems;
-
-        if(!Application.isEditor)
-        {
-            LoadScene(startScene, LoadSceneMode.Additive);
-        }
+        Assert.IsNull(BGMPlayer);
+        BGMPlayer = GameObject.FindGameObjectWithTag("BGMPlayer")?.GetComponent<AudioSource>();
     }
 
     private static void PrintAllData(Dictionary<string, List<(string, string)>> totaldata)
@@ -252,7 +266,7 @@ public class GLOBAL : MonoBehaviour
     //获取场景存档数据文件名
     private static string GetSceneDataPath(Scene scene)
     {
-        return Application.dataPath + "/local/data/" + scene.name + ".data";
+        return dataPath + "/" + scene.name + ".data";
     }
 
     private IEnumerator FadeTo(float alpha, bool keepactive = true)
